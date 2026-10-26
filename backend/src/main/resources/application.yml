@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: nqiya-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nqiya}
+    username: ${DB_USERNAME:nqiya}
+    password: ${DB_PASSWORD:nqiya}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      max-request-size: 7MB
+  # SMTP is enabled only when SPRING_MAIL_HOST is set (plus SPRING_MAIL_PORT / _USERNAME / _PASSWORD).
+  # Without it, login codes are just logged.
+  mail:
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    # SMTP outages must not mark the API as down: login codes degrade to logs.
+    mail:
+      enabled: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  jwt:
+    # Override in every non-local environment with a random 32+ byte secret.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-please-32bytes-min!}
+    ttl: 30d
+    issuer: nqiya
+  auth:
+    dev-mode: ${AUTH_DEV_MODE:true}
+    code-ttl: 10m
+    max-attempts: 5
+    max-codes-per-window: 5
+    code-window: 15m
+  mail:
+    from: ${MAIL_FROM:NQIYA <no-reply@nqiya.ma>}
+  ai:
+    # groq | gemini | stub
+    provider: ${AI_PROVIDER:stub}
+    groq:
+      api-key: ${GROQ_API_KEY:}
+      base-url: https://api.groq.com/openai/v1
+      # tried in order; add a second vision model to survive rate limits
+      models: ${GROQ_MODELS:qwen/qwen3.8-27b}
+      timeout: 30s
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: https://generativelanguage.googleapis.com/v1beta
+      models: ${GEMINI_MODELS:gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash}
+      timeout: 30s
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+  uploads:
+    max-bytes: 6291456
+  admin-emails: ${ADMIN_EMAILS:}

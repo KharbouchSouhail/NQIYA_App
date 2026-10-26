@@ -1,0 +1,97 @@
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+
+  .card {
+    padding: 12px 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+  }
+
+  strong {
+    font-size: 22px;
+  }
+
+  span {
+    font-size: 12px;
+    color: var(--ink-2);
+    font-weight: 700;
+  }
+
+  .dirty strong {
+    color: var(--dirty);
+  }
+
+  .cleaning strong {
+    color: #b07e00;
+  }
+
+  .clean strong {
+    color: var(--clean);
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &.closed {
+    opacity: 0.65;
+  }
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  a {
+    color: var(--ink);
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logs {
+  list-style: none;
+  margin: 0;
+  padding: 4px 14px;
+
+  li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+}

@@ -1,0 +1,153 @@
+<div class="page">
+  @if (auth.me(); as me) {
+    <header class="page-header">
+      <h1>Profile</h1>
+      <span class="spacer"></span>
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin" class="icon-btn" aria-label="Admin panel"><app-icon name="shield" /></a>
+      }
+      <button type="button" class="icon-btn" (click)="auth.logout()" aria-label="Log out"><app-icon name="logout" /></button>
+    </header>
+
+    <!-- rank card -->
+    <section class="rank-card" [style.--rank]="rankStyle()?.color">
+      <div class="top">
+        <span class="frame" [class.legend]="me.rank.current === 'DIAMOND'">
+          <span class="avatar">{{ me.displayName.charAt(0).toUpperCase() }}</span>
+        </span>
+        <div class="who">
+          @if (editing()) {
+            <form class="edit" (ngSubmit)="saveName()">
+              <input class="input" name="name" [(ngModel)]="nameDraft" maxlength="40" aria-label="Display name" />
+              <button class="icon-btn" type="submit" aria-label="Save"><app-icon name="check" /></button>
+            </form>
+          } @else {
+            <h2 [class.legend-name]="me.rank.current === 'DIAMOND'">
+              {{ me.displayName }}
+              <button type="button" class="edit-btn" (click)="startEdit()" aria-label="Edit name">
+                <app-icon name="edit" [size]="16" />
+              </button>
+            </h2>
+          }
+          <span class="rank-line"><app-rank-badge [rank]="me.rank.current" [size]="22" [showLabel]="true" /></span>
+        </div>
+      </div>
+
+      <div class="xp-row">
+        <strong>{{ me.xp | number }} XP</strong>
+        @if (me.rank.next; as next) {
+          <span class="small">{{ me.rank.nextMinXp! - me.xp | number }} XP to {{ rankStyles[next].label }}</span>
+        } @else {
+          <span class="small">Legend status reached</span>
+        }
+      </div>
+      <div class="progress"><span [style.width.%]="me.rank.percent"></span></div>
+
+      <div class="stats">
+        <div><strong>{{ me.coins | number }}</strong><span>coins</span></div>
+        <div><strong>{{ me.completedCleanups }}</strong><span>cleanups</span></div>
+        <div><strong>{{ me.createdAt | date: 'MMM y' }}</strong><span>joined</span></div>
+      </div>
+    </section>
+
+    <button type="button" class="btn btn-dark block lg" (click)="showTicket.set(true)">
+      <app-icon name="qr" /> My QR ticket
+    </button>
+
+    <div class="segmented" role="tablist">
+      <button type="button" role="tab" [class.active]="tab() === 'history'" (click)="tab.set('history')">History</button>
+      <button type="button" role="tab" [class.active]="tab() === 'cleanups'" (click)="tab.set('cleanups')">Cleanups</button>
+      <button type="button" role="tab" [class.active]="tab() === 'ranks'" (click)="tab.set('ranks')">Ranks</button>
+    </div>
+
+    @switch (tab()) {
+      @case ('history') {
+        @if (history.isLoading()) {
+          <div class="skeleton" style="height: 160px"></div>
+        } @else if ((history.value() ?? []).length === 0) {
+          <div class="empty card"><div class="big">🌱</div><p>Your history starts with your first cleanup.</p></div>
+        } @else {
+          <ul class="card feed">
+            @for (h of history.value(); track h.id) {
+              <li>
+                <span class="ic" [class]="h.type.toLowerCase()"><app-icon [name]="historyIcons[h.type]" [size]="18" /></span>
+                <span class="grow">
+                  <strong>{{ h.description }}</strong>
+                  <span class="small muted">{{ h.createdAt | date: 'd MMM y, HH:mm' }}</span>
+                </span>
+                <span class="deltas">
+                  @if (h.xpDelta) {
+                    <span class="xp">+{{ h.xpDelta }} XP</span>
+                  }
+                  @if (h.coinsDelta) {
+                    <span class="coins" [class.neg]="h.coinsDelta < 0">{{ h.coinsDelta > 0 ? '+' : '' }}{{ h.coinsDelta }} 🪙</span>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+      @case ('cleanups') {
+        @if (cleanups.isLoading()) {
+          <div class="skeleton" style="height: 160px"></div>
+        } @else if ((cleanups.value() ?? []).length === 0) {
+          <div class="empty card">
+            <div class="big">🧹</div>
+            <p>No cleanups yet.</p>
+            <a routerLink="/map" class="btn btn-primary sm">Find one on the map</a>
+          </div>
+        } @else {
+          <div class="list">
+            @for (c of cleanups.value(); track c.spotId) {
+              <a class="card cleanup" [routerLink]="['/spots', c.spotId]">
+                <img [src]="c.beforePhotoUrl" alt="" loading="lazy" />
+                <span class="grow">
+                  <strong>{{ c.title }}</strong>
+                  <span class="small muted">
+                    {{ c.organizer ? 'Organizer' : 'Volunteer' }}
+                    @if (c.meetingAt) {
+                      · {{ c.meetingAt | date: 'd MMM, HH:mm' }}
+                    }
+                  </span>
+                </span>
+                <span class="pill" [class]="c.status.toLowerCase()">{{ c.status.toLowerCase() }}</span>
+              </a>
+            }
+          </div>
+        }
+      }
+      @case ('ranks') {
+        <ul class="card ladder">
+          @for (r of config()?.ranks; track r.rank) {
+            <li [class.current]="r.rank === me.rank.current">
+              <app-rank-badge [rank]="r.rank" [size]="40" />
+              <span class="grow">
+                <strong>{{ rankStyles[r.rank].label }}</strong>
+                <span class="small muted">{{ r.tagline }}</span>
+                <span class="perks">
+                  <span class="pill">{{ r.minXp | number }} XP</span>
+                  @if (r.levelUpGift) {
+                    <span class="pill gold">+{{ r.levelUpGift }} coins gift</span>
+                  }
+                  @if (r.xpMultiplier > 1) {
+                    <span class="pill">×{{ r.xpMultiplier }} XP</span>
+                  }
+                  @if (r.coinMultiplier > 1) {
+                    <span class="pill">×{{ r.coinMultiplier }} coins</span>
+                  }
+                </span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (showTicket()) {
+      <app-ticket-sheet [code]="me.ticketCode" [name]="me.displayName" (closed)="showTicket.set(false)" />
+    }
+  } @else {
+    <div class="skeleton" style="height: 220px"></div>
+  }
+</div>

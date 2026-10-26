@@ -1,0 +1,14 @@
+# Production overrides: activate with SPRING_PROFILES_ACTIVE=prod
+app:
+  auth:
+    dev-mode: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: INFO

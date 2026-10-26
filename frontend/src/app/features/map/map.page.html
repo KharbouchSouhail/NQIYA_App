@@ -1,0 +1,101 @@
+<div class="map" #map role="application" aria-label="Map of reported spots"></div>
+
+<header class="topbar">
+  <app-logo [size]="34" />
+  @if (auth.me(); as me) {
+    <a routerLink="/profile" class="wallet" aria-label="Your profile">
+      <app-icon name="coins" [size]="18" />
+      <strong>{{ me.coins }}</strong>
+    </a>
+  } @else {
+    <a routerLink="/login" class="btn btn-dark sm login">
+      <app-icon name="login" [size]="16" />
+      Log in
+    </a>
+  }
+</header>
+
+<div class="filters" role="group" aria-label="Filter spots">
+  @for (s of statuses; track s) {
+    <button
+      type="button"
+      class="chip"
+      [class.active]="active().has(s)"
+      [attr.aria-pressed]="active().has(s)"
+      (click)="toggle(s)"
+    >
+      <span class="dot" [style.background]="statusStyles[s].cssVar">
+        <app-icon [name]="statusStyles[s].icon" [size]="12" [stroke]="3" />
+      </span>
+      {{ statusStyles[s].label }}
+    </button>
+  }
+  <button
+    type="button"
+    class="chip"
+    [class.active]="showRadius()"
+    (click)="showRadius.set(!showRadius())"
+    aria-label="Distance filter"
+  >
+    <span class="dot km"><app-icon name="pin" [size]="12" [stroke]="3" /></span>
+    {{ myPosition() ? radiusKm() + ' km' : 'All' }}
+  </button>
+</div>
+
+@if (showRadius()) {
+  <div class="radius card pop-in">
+    @if (myPosition()) {
+      <label for="radius">Within <strong>{{ radiusKm() }} km</strong> of you</label>
+      <input id="radius" type="range" min="1" max="10" step="1" [value]="radiusKm()" (input)="setRadius($event)" />
+    } @else {
+      <p class="small muted">Turn on location to filter spots by distance (1–10 km).</p>
+      <button type="button" class="btn btn-outline sm" (click)="locate()">Use my location</button>
+    }
+  </div>
+}
+
+@if (loading()) {
+  <div class="loading"><span class="spinner"></span></div>
+}
+
+<button
+  type="button"
+  class="icon-btn locate"
+  (click)="locate()"
+  [disabled]="locating()"
+  aria-label="Centre on my position"
+>
+  @if (locating()) {
+    <span class="spinner"></span>
+  } @else {
+    <app-icon name="locate" />
+  }
+</button>
+
+@if (selected(); as spot) {
+  <article class="preview card pop-in" (click)="open(spot)" (keydown.enter)="open(spot)" tabindex="0">
+    <img [src]="spot.beforePhotoUrl" alt="" loading="lazy" />
+    <div class="info">
+      <span class="pill" [class]="spot.status.toLowerCase()">{{ statusStyles[spot.status].label }}</span>
+      <h3>{{ spot.title }}</h3>
+      <p class="small muted row-meta">
+        <span><app-icon name="users" [size]="14" /> {{ spot.participantCount }}</span>
+        @if (spot.meetingAt) {
+          <span><app-icon name="clock" [size]="14" /> {{ spot.meetingAt | date: 'EEE d MMM, HH:mm' }}</span>
+        }
+        @if (spot.distanceKm !== null) {
+          <span><app-icon name="pin" [size]="14" /> {{ spot.distanceKm | number: '1.1-1' }} km</span>
+        }
+        @if (spot.visibility === 'PRIVATE') {
+          <span><app-icon name="lock" [size]="14" /> Solo</span>
+        }
+      </p>
+    </div>
+    <app-icon name="chevron-right" class="go" />
+  </article>
+} @else if (!loading() && spots().length === 0) {
+  <div class="empty-hint card pop-in">
+    <strong>No spots here yet.</strong>
+    <span class="small muted">Seen a mess? Tap <b>Report</b> and be the first.</span>
+  </div>
+}

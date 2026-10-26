@@ -1,0 +1,117 @@
+<div class="page">
+  <header class="page-header">
+    <a routerLink="/profile" class="icon-btn" aria-label="Back"><app-icon name="chevron-left" /></a>
+    <h1>Admin</h1>
+  </header>
+
+  @if (stats.value(); as s) {
+    <section class="stats">
+      <div class="card"><strong>{{ s.users }}</strong><span>users</span></div>
+      <div class="card dirty"><strong>{{ s.dirty }}</strong><span>dirty</span></div>
+      <div class="card cleaning"><strong>{{ s.cleaning }}</strong><span>cleaning</span></div>
+      <div class="card clean"><strong>{{ s.clean }}</strong><span>clean</span></div>
+    </section>
+  }
+
+  <div class="segmented" role="tablist">
+    <button type="button" role="tab" [class.active]="tab() === 'spots'" (click)="tab.set('spots')">Spots</button>
+    <button type="button" role="tab" [class.active]="tab() === 'users'" (click)="tab.set('users')">Users</button>
+    <button type="button" role="tab" [class.active]="tab() === 'log'" (click)="tab.set('log')">Action log</button>
+  </div>
+
+  @switch (tab()) {
+    @case ('spots') {
+      @if (spots.value(); as page) {
+        <div class="list">
+          @for (s of page.items; track s.id) {
+            <article class="card item" [class.closed]="s.closed">
+              <div class="grow">
+                <a [routerLink]="['/spots', s.id]"><strong>{{ s.title }}</strong></a>
+                <span class="small muted">#{{ s.id }} · {{ s.organizerEmail }} · {{ s.createdAt | date: 'd MMM y' }}</span>
+                <span class="tags">
+                  <span class="pill" [class]="s.status.toLowerCase()">{{ s.status.toLowerCase() }}</span>
+                  <span class="pill">{{ s.visibility.toLowerCase() }}</span>
+                  <span class="pill">{{ s.participantCount }} joined</span>
+                  @if (s.closed) {
+                    <span class="pill dirty">closed</span>
+                  }
+                </span>
+              </div>
+              <div class="actions">
+                @if (s.closed) {
+                  <button type="button" class="btn btn-outline sm" (click)="reopen(s)">Reopen</button>
+                } @else {
+                  <button type="button" class="btn btn-outline sm" (click)="close(s)">Close</button>
+                }
+                <button type="button" class="btn btn-danger sm" (click)="remove(s)" aria-label="Delete spot">
+                  <app-icon name="trash" [size]="16" />
+                </button>
+              </div>
+            </article>
+          } @empty {
+            <div class="empty card">No spots yet.</div>
+          }
+        </div>
+        <nav class="pager">
+          <button class="btn btn-outline sm" [disabled]="spotPage() === 0" (click)="spotPage.set(spotPage() - 1)">Previous</button>
+          <span class="small muted">Page {{ page.page + 1 }} / {{ Math.max(1, Math.ceil(page.total / page.size)) }}</span>
+          <button class="btn btn-outline sm" [disabled]="(page.page + 1) * page.size >= page.total" (click)="spotPage.set(spotPage() + 1)">Next</button>
+        </nav>
+      } @else {
+        <div class="skeleton" style="height: 200px"></div>
+      }
+    }
+    @case ('users') {
+      <form class="search" (ngSubmit)="search()">
+        <input class="input" name="q" [(ngModel)]="queryDraft" placeholder="Search email or name" aria-label="Search users" />
+        <button class="btn btn-dark" type="submit">Search</button>
+      </form>
+      @if (users.value(); as page) {
+        <div class="list">
+          @for (u of page.items; track u.id) {
+            <article class="card item">
+              <app-rank-badge [rank]="u.rank" [size]="34" />
+              <div class="grow">
+                <strong>{{ u.displayName }}</strong>
+                <span class="small muted">{{ u.email }} · {{ u.xp }} XP · {{ u.coins }} coins</span>
+              </div>
+              @if (u.id !== auth.me()?.id) {
+                <button type="button" class="btn sm" [class.btn-dark]="u.role !== 'ADMIN'" [class.btn-danger]="u.role === 'ADMIN'" (click)="toggleAdmin(u)">
+                  {{ u.role === 'ADMIN' ? 'Revoke admin' : 'Make admin' }}
+                </button>
+              } @else {
+                <span class="pill">You</span>
+              }
+            </article>
+          } @empty {
+            <div class="empty card">No users found.</div>
+          }
+        </div>
+      }
+    }
+    @case ('log') {
+      @if (log.value(); as page) {
+        <ul class="card logs">
+          @for (l of page.items; track l.id) {
+            <li>
+              <span class="pill">{{ l.action }}</span>
+              <span class="grow">
+                <strong>{{ l.targetType }} #{{ l.targetId }}</strong>
+                @if (l.details) {
+                  <span class="small">{{ l.details }}</span>
+                }
+                <span class="small muted">{{ l.adminEmail }} · {{ l.createdAt | date: 'd MMM y, HH:mm' }}</span>
+              </span>
+            </li>
+          } @empty {
+            <li class="muted">No moderation actions yet.</li>
+          }
+        </ul>
+        <nav class="pager">
+          <button class="btn btn-outline sm" [disabled]="logPage() === 0" (click)="logPage.set(logPage() - 1)">Previous</button>
+          <button class="btn btn-outline sm" [disabled]="(page.page + 1) * page.size >= page.total" (click)="logPage.set(logPage() + 1)">Next</button>
+        </nav>
+      }
+    }
+  }
+</div>

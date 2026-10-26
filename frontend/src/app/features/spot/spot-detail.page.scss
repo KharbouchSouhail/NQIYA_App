@@ -1,0 +1,164 @@
+.photos {
+  display: grid;
+  gap: 8px;
+
+  &.pair {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  figure {
+    margin: 0;
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    background: var(--brand-100);
+    box-shadow: var(--shadow-sm);
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  figcaption {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    background: var(--dirty);
+    color: #fff;
+
+    &.after {
+      background: var(--clean);
+    }
+  }
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  h1 {
+    font-size: 24px;
+    color: var(--brand-900);
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.facts {
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  dt {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    flex: none;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 700;
+  }
+}
+
+.org {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.organizer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.finish {
+  cursor: pointer;
+
+  &.disabled {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+}
+
+.reject {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: #fff6f6;
+  border: 1px solid #f3c9ca;
+  color: #8f1d20;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.checked,
+.cleaned {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--brand-600);
+  background: var(--brand-50);
+  border-color: var(--brand-200);
+
+  strong {
+    color: var(--brand-900);
+  }
+}
+
+.center {
+  text-align: center;
+}
+
+.people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .who {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}

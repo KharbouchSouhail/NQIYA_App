@@ -1,0 +1,158 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Spot a mess</h1>
+  </header>
+
+  <ol class="stepper" aria-label="Progress">
+    @for (s of steps; track s.id) {
+      <li [class.done]="s.id < stepIndex()" [class.current]="s.id === stepIndex()">
+        <span class="num">
+          @if (s.id < stepIndex()) {
+            <app-icon name="check" [size]="14" [stroke]="3" />
+          } @else {
+            {{ s.id }}
+          }
+        </span>
+        <span class="lbl">{{ s.label }}</span>
+      </li>
+    }
+  </ol>
+
+  <!-- Photo -->
+  <section class="photo card" [class.has]="previewUrl()">
+    @if (previewUrl(); as url) {
+      <img [src]="url" alt="Your photo of the mess" />
+      @if (step() === 'checking') {
+        <div class="scan" aria-live="polite">
+          <span class="beam"></span>
+          <span class="scan-label"><app-icon name="sparkles" [size]="18" /> Gemini is looking…</span>
+        </div>
+      }
+    } @else {
+      <div class="placeholder">
+        <app-icon name="camera" [size]="44" [stroke]="1.6" />
+        <p><strong>Take a live photo of the whole mess</strong></p>
+        <p class="small muted">The AI checks it's really a mess and drafts a title for you.</p>
+      </div>
+    }
+  </section>
+
+  @if (rejection(); as reason) {
+    <div class="reject card pop-in" role="alert">
+      <app-icon name="alert" />
+      <div>
+        <strong>The AI didn't accept this photo</strong>
+        <p class="small">{{ reason }}</p>
+      </div>
+    </div>
+  }
+
+  @if (step() !== 'details') {
+    <label class="btn btn-primary block lg camera-btn" [class.disabled]="step() === 'checking'">
+      <app-icon name="camera" />
+      {{ previewUrl() ? 'Retake photo' : 'Open camera' }}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="sr-only"
+        [disabled]="step() === 'checking'"
+        (change)="onPhoto($event)"
+      />
+    </label>
+  } @else {
+    <form class="details pop-in" [formGroup]="form" (ngSubmit)="publish()">
+      @if (draft(); as d) {
+        <div class="ai-tags">
+          <span class="pill"><app-icon name="sparkles" [size]="14" /> AI drafted</span>
+          @if (d.dirtLevel) {
+            <span class="pill" [class.dirty]="d.dirtLevel === 'HIGH'" [class.cleaning]="d.dirtLevel === 'MEDIUM'">
+              Dirt: {{ d.dirtLevel.toLowerCase() }}
+            </span>
+          }
+          @if (d.wasteType) {
+            <span class="pill">{{ d.wasteType }}</span>
+          }
+        </div>
+      }
+
+      <div class="field">
+        <label for="title">Title</label>
+        <input id="title" class="input" formControlName="title" maxlength="80" />
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <span class="error">A short title is required</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="desc">Description</label>
+        <textarea id="desc" class="input" formControlName="description" maxlength="400" rows="3"></textarea>
+        <span class="hint">What should volunteers bring?</span>
+      </div>
+
+      <div class="field">
+        <span class="label">Type of cleanup</span>
+        <div class="segmented" role="radiogroup">
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="form.value.visibility === 'PUBLIC'"
+            [class.active]="form.value.visibility === 'PUBLIC'"
+            (click)="setVisibility('PUBLIC')"
+          >
+            Public cleanup
+          </button>
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="form.value.visibility === 'PRIVATE'"
+            [class.active]="form.value.visibility === 'PRIVATE'"
+            (click)="setVisibility('PRIVATE')"
+          >
+            Solo cleanup
+          </button>
+        </div>
+      </div>
+
+      @if (form.value.visibility === 'PUBLIC') {
+        <div class="field">
+          <label for="meeting">Meeting time</label>
+          <input id="meeting" class="input" type="datetime-local" formControlName="meetingAt" [min]="minMeeting" />
+          <span class="hint">Others can join and you'll check them in with their QR ticket.</span>
+        </div>
+      } @else {
+        <label class="toggle card">
+          <input type="checkbox" formControlName="anonymous" />
+          <span>
+            <strong>Stay anonymous</strong>
+            <span class="small muted">Private, not joinable, your name is hidden.</span>
+          </span>
+        </label>
+      }
+
+      <div class="gps card" [class.ok]="fixOk()">
+        <app-icon name="pin" />
+        <div class="grow">
+          @if (locating()) {
+            <strong>Getting a fresh GPS fix…</strong>
+          } @else if (fix(); as f) {
+            <strong>{{ fixOk() ? 'Pinned where you stand' : 'GPS not precise enough' }}</strong>
+            <span class="small muted">± {{ f.accuracy | number: '1.0-0' }} m · needs 100 m or better</span>
+          } @else {
+            <strong>No location yet</strong>
+          }
+        </div>
+        <button type="button" class="btn btn-outline sm" (click)="pin()" [disabled]="locating()">
+          <app-icon name="refresh" [size]="16" /> Retry
+        </button>
+      </div>
+
+      <button class="btn btn-primary block lg" type="submit" [disabled]="publishing() || !fixOk()">
+        @if (publishing()) {
+          <span class="spinner"></span>
+        }
+        Publish
+      </button>
+    </form>
+  }
+</div>

@@ -1,0 +1,116 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Shop</h1>
+    <span class="spacer"></span>
+    @if (auth.isLoggedIn()) {
+      <span class="balance"><app-icon name="coins" [size]="18" /> {{ coins() }}</span>
+    }
+  </header>
+
+  <div class="segmented" role="tablist">
+    <button type="button" role="tab" [class.active]="tab() === 'catalogue'" [attr.aria-selected]="tab() === 'catalogue'" (click)="tab.set('catalogue')">
+      Partners
+    </button>
+    <button type="button" role="tab" [class.active]="tab() === 'wallet'" [attr.aria-selected]="tab() === 'wallet'" (click)="tab.set('wallet')">
+      Wallet @if (activeCount() > 0) { ({{ activeCount() }}) }
+    </button>
+  </div>
+
+  @if (tab() === 'catalogue') {
+    <p class="small muted">Spend your coins on vouchers from local partners. <em>Demo catalogue.</em></p>
+    @if (catalogue.isLoading()) {
+      @for (i of [1, 2, 3]; track i) {
+        <div class="skeleton" style="height: 96px"></div>
+      }
+    } @else {
+      <div class="list">
+        @for (v of catalogue.value(); track v.id) {
+          <article class="card voucher">
+            <span class="emoji" aria-hidden="true">{{ emoji(v.category) }}</span>
+            <div class="grow">
+              <span class="small muted">{{ v.partnerName }} · {{ v.city }}</span>
+              <strong>{{ v.title }}</strong>
+              <span class="small muted">{{ v.description }}</span>
+            </div>
+            @if (auth.isLoggedIn()) {
+              <button
+                type="button"
+                class="btn sm"
+                [class.btn-gold]="coins() >= v.costCoins"
+                [class.btn-outline]="coins() < v.costCoins"
+                [disabled]="coins() < v.costCoins || buying() !== null"
+                (click)="buy(v)"
+                [attr.aria-label]="'Buy for ' + v.costCoins + ' coins'"
+              >
+                @if (buying() === v.id) {
+                  <span class="spinner"></span>
+                } @else {
+                  <app-icon name="coins" [size]="16" /> {{ v.costCoins }}
+                }
+              </button>
+            } @else {
+              <span class="pill gold"><app-icon name="coins" [size]="14" /> {{ v.costCoins }}</span>
+            }
+          </article>
+        }
+      </div>
+      @if (!auth.isLoggedIn()) {
+        <a routerLink="/login" [queryParams]="{ next: '/shop' }" class="btn btn-primary block">Log in to earn & spend coins</a>
+      }
+    }
+  } @else {
+    @if (!auth.isLoggedIn()) {
+      <div class="empty card">
+        <div class="big">👛</div>
+        <p>Log in to see your wallet.</p>
+        <a routerLink="/login" [queryParams]="{ next: '/shop' }" class="btn btn-primary sm">Log in</a>
+      </div>
+    } @else if (wallet.isLoading()) {
+      <div class="skeleton" style="height: 96px"></div>
+    } @else if ((wallet.value() ?? []).length === 0) {
+      <div class="empty card">
+        <div class="big">🎟️</div>
+        <p>No vouchers yet. Clean a spot, earn coins, treat yourself.</p>
+      </div>
+    } @else {
+      <div class="list">
+        @for (w of wallet.value(); track w.id) {
+          <article class="card ticket" [class.used]="w.status === 'USED'">
+            <div class="row">
+              <span class="emoji" aria-hidden="true">{{ emoji(w.voucher.category) }}</span>
+              <div class="grow">
+                <span class="small muted">{{ w.voucher.partnerName }}</span>
+                <strong>{{ w.voucher.title }}</strong>
+                <span class="small muted">
+                  @if (w.status === 'USED') {
+                    Used {{ w.usedAt | date: 'd MMM, HH:mm' }}
+                  } @else {
+                    Bought {{ w.purchasedAt | date: 'd MMM' }}
+                  }
+                </span>
+              </div>
+              <span class="code">{{ w.code }}</span>
+            </div>
+            @if (w.status === 'ACTIVE') {
+              <p class="small muted">At the counter, hold the button in front of the cashier.</p>
+              <app-hold-button label="Hold to use" (confirmed)="redeem(w)" />
+            }
+          </article>
+        }
+      </div>
+    }
+  }
+</div>
+
+@if (redeeming(); as r) {
+  <div class="used-overlay pop-in" role="dialog" aria-modal="true" (click)="redeeming.set(null)">
+    <div class="used-card">
+      <app-icon name="check" [size]="48" [stroke]="3" />
+      <h2>Valid voucher</h2>
+      <p><strong>{{ r.voucher.title }}</strong> · {{ r.voucher.partnerName }}</p>
+      <p class="code">{{ r.code }}</p>
+      <p class="small">{{ r.usedAt | date: 'd MMM y, HH:mm:ss' }}</p>
+      <button type="button" class="btn btn-outline">Done</button>
+    </div>
+  </div>
+}

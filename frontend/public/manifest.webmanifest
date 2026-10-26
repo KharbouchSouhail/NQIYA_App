@@ -1,0 +1,13 @@
+{
+  "name": "NQIYA",
+  "short_name": "NQIYA",
+  "description": "Spot a mess. Clean it together. Level up.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f8f4",
+  "theme_color": "#f3f8f4",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
